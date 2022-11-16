@@ -62,20 +62,16 @@ zonation_weighted <- function(seurat_slice_obj, query_genes, ctrl_genes=NULL, zo
 	stuff <- cleanup_data(seurat_slice_obj, query_genes, ctrl_genes=NULL, zonation_score_col="zonation_score", use_sct=TRUE, scale_score=TRUE)
 	expr_mat <- stuff$expr_mat
 	zonation_score <- stuff$zonation_score
-
-	# Error catching
-	query_genes <- query_genes[query_genes %in% rownames(expr_mat)];
-	ctrl_genes <- ctrl_genes[ctrl_genes %in% rownames(expr_mat)];
-
-	if (length(query_genes) == 0) {warning("Warning: No Query Genes found in object")}
-	if (length(ctrl_genes) == 0) {warning("No control genes.")}
+	#Error catching
 	if (length(zonation_score) == 0) {stop("Zonation score not found.")}
 
 	if (class(query_genes) == "list") {
 	# If given a list of gene sets, calculate average expression across all genes in the set.
 		calc_zonation_set <- function(gset, expr_mat, zonation_score) {
+			# Error catching
 			gset <- gset[gset %in% rownames(expr_mat)]
-			if (length(gset) < 3) {warn(paste("Warning: only", length(gset), "genes left in the set."))}
+			if (length(gset) < 3) {warning(paste("Warning: only", length(gset), "genes left in the set."))}
+	
 			if (length(gset) == 1) {
 				gexpr <- expr_mat[gset,]
 			} else {
@@ -89,10 +85,18 @@ zonation_weighted <- function(seurat_slice_obj, query_genes, ctrl_genes=NULL, zo
 		}
 		my_genes <- c(ctrl_genes, query_genes)
 		my_names = names(my_genes)
-		out <- sapply(my_genes, calc_zonation_gene, expr_mat, zonation_score)
+		out <- sapply(my_genes, calc_zonation_set, expr_mat, zonation_score)
 		means <- out[1,]
 		ps <- out[2,]
 	} else {
+
+		# Error catching
+		query_genes <- query_genes[query_genes %in% rownames(expr_mat)];
+		ctrl_genes <- ctrl_genes[ctrl_genes %in% rownames(expr_mat)];
+
+		if (length(query_genes) == 0) {warning("Warning: No Query Genes found in object")}
+		if (length(ctrl_genes) == 0) {warning("No control genes.")}
+
 		# Gather barplot data
 		calc_zonation_gene <- function(g, expr_mat, zonation_score) {
 			gexpr <- expr_mat[g,]
@@ -156,3 +160,4 @@ zonation_weighted <- function(seurat_slice_obj, query_genes, ctrl_genes=NULL, zo
 	}
 	return(output)
 }
+
